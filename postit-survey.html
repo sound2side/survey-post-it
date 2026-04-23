@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>아날로그 vs 디지털 메모 습관 설문조사</title>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Myeongjo:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --yellow: #FFE566;
+    --yellow-dark: #F5D800;
+    --pink: #FF8FAB;
+    --mint: #A8E6CF;
+    --ink: #1A1A2E;
+    --paper: #FAFAF5;
+    --shadow: rgba(0,0,0,0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background-color: #F0EDE4;
+    background-image: radial-gradient(circle at 20% 20%, rgba(255,229,102,0.3) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(168,230,207,0.2) 0%, transparent 50%);
+    font-family: 'Gowun Dodum', sans-serif;
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 60px 20px;
+  }
+  .container { max-width: 680px; margin: 0 auto; }
+  .lang-tabs { display: flex; justify-content: center; gap: 8px; margin-bottom: 40px; }
+  .lang-tab {
+    padding: 10px 28px;
+    border: 2px solid var(--ink);
+    background: transparent;
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+    color: var(--ink);
+    letter-spacing: 0.05em;
+  }
+  .lang-tab.active { background: var(--ink); color: var(--yellow); }
+  .lang-tab:hover:not(.active) { background: rgba(26,26,46,0.08); }
+  .survey-panel { display: none; }
+  .survey-panel.active { display: block; }
+  .header { text-align: center; margin-bottom: 60px; }
+  .header-sticky {
+    display: inline-block;
+    background: var(--yellow);
+    padding: 32px 40px;
+    transform: rotate(-1.5deg);
+    box-shadow: 4px 6px 16px var(--shadow);
+    position: relative;
+  }
+  .header-sticky::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px; background: var(--yellow-dark); opacity: 0.4; }
+  .header h1 { font-family: 'Nanum Myeongjo', serif; font-size: 26px; font-weight: 700; line-height: 1.4; color: var(--ink); }
+  .header p { margin-top: 10px; font-size: 14px; color: #555; line-height: 1.7; }
+  .question-card {
+    background: var(--paper);
+    border-radius: 2px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: 3px 4px 12px var(--shadow);
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    animation: slideIn 0.4s ease both;
+  }
+  .question-card:hover { transform: translateY(-2px); box-shadow: 4px 8px 20px var(--shadow); }
+  .question-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; border-radius: 2px 2px 0 0; }
+  .section-1 .question-card::before { background: var(--pink); }
+  .section-2 .question-card::before { background: var(--yellow-dark); }
+  .section-3 .question-card::before { background: var(--mint); }
+  .question-number { font-size: 11px; color: #aaa; margin-bottom: 8px; letter-spacing: 0.05em; }
+  .question-text { font-family: 'Nanum Myeongjo', serif; font-size: 16px; font-weight: 700; line-height: 1.6; margin-bottom: 18px; color: var(--ink); }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; color: #444; padding: 8px 12px; border-radius: 2px; transition: background 0.15s; }
+  .option-label:hover { background: rgba(255,229,102,0.25); }
+  .option-label input[type="radio"], .option-label input[type="checkbox"] { appearance: none; width: 16px; height: 16px; border: 2px solid #ccc; border-radius: 50%; flex-shrink: 0; transition: all 0.15s; position: relative; }
+  .option-label input[type="checkbox"] { border-radius: 3px; }
+  .option-label input[type="radio"]:checked { border-color: var(--pink); background: var(--pink); }
+  .option-label input[type="checkbox"]:checked { border-color: var(--mint); background: var(--mint); }
+  .option-label input:checked::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 6px; height: 6px; background: white; border-radius: 50%; }
+  textarea { width: 100%; min-height: 90px; border: 1.5px solid #ddd; border-radius: 2px; padding: 12px 14px; font-family: 'Gowun Dodum', sans-serif; font-size: 14px; color: var(--ink); background: #FDFDF8; resize: vertical; outline: none; transition: border-color 0.2s; line-height: 1.7; }
+  textarea:focus { border-color: var(--yellow-dark); }
+  textarea::placeholder { color: #bbb; }
+  .scale-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .scale-label { font-size: 12px; color: #999; white-space: nowrap; }
+  .scale-options { display: flex; gap: 8px; flex: 1; justify-content: center; }
+  .scale-btn { width: 40px; height: 40px; border: 1.5px solid #ddd; background: white; border-radius: 2px; font-size: 13px; cursor: pointer; transition: all 0.15s; font-family: 'Gowun Dodum', sans-serif; }
+  .scale-btn:hover { border-color: var(--yellow-dark); background: rgba(255,229,102,0.2); }
+  .scale-btn.selected { background: var(--yellow); border-color: var(--yellow-dark); font-weight: bold; }
+  .section-divider { margin: 40px 0 24px; }
+  .section-title { font-family: 'Nanum Myeongjo', serif; font-size: 18px; font-weight: 700; color: var(--ink); margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+  .section-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .section-1 .section-dot { background: var(--pink); }
+  .section-2 .section-dot { background: var(--yellow-dark); }
+  .section-3 .section-dot { background: var(--mint); }
+  .section-desc { font-size: 13px; color: #999; padding-left: 20px; }
+  .submit-wrap { text-align: center; margin-top: 50px; padding-bottom: 40px; }
+  .submit-btn { background: var(--ink); color: var(--yellow); border: none; padding: 16px 48px; font-family: 'Nanum Myeongjo', serif; font-size: 16px; font-weight: 700; cursor: pointer; border-radius: 2px; letter-spacing: 0.05em; transition: all 0.2s; box-shadow: 3px 4px 12px rgba(0,0,0,0.2); }
+  .submit-btn:hover { transform: translateY(-2px); box-shadow: 4px 8px 20px rgba(0,0,0,0.25); }
+  .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .success-msg { display: none; text-align: center; padding: 40px; background: var(--yellow); border-radius: 2px; box-shadow: 4px 6px 16px var(--shadow); transform: rotate(0.5deg); margin-top: 20px; }
+  .success-msg h2 { font-family: 'Nanum Myeongjo', serif; font-size: 22px; margin-bottom: 8px; }
+  .success-msg p { font-size: 14px; color: #555; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .question-card:nth-child(1) { animation-delay: 0.05s; }
+  .question-card:nth-child(2) { animation-delay: 0.1s; }
+  .question-card:nth-child(3) { animation-delay: 0.15s; }
+  .question-card:nth-child(4) { animation-delay: 0.2s; }
+  .question-card:nth-child(5) { animation-delay: 0.25s; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="lang-tabs">
+    <button class="lang-tab active" onclick="switchLang('ko', this)">한국어</button>
+    <button class="lang-tab" onclick="switchLang('en', this)">English</button>
+  </div>
+
+  <!-- ===== KOREAN ===== -->
+  <div class="survey-panel active" id="panel-ko">
+    <div class="header">
+      <div class="header-sticky">
+        <h1>아날로그 vs 디지털<br>메모 습관 설문조사</h1>
+        <p>솔직한 답변이 큰 도움이 돼요.<br>약 5분 소요됩니다.</p>
+      </div>
+    </div>
+    <form id="surveyForm-ko">
+      <input type="hidden" name="_language" value="한국어">
+
+      <div class="section-divider section-1">
+        <div class="section-title"><span class="section-dot"></span>아날로그 습관 & 디지털화의 마찰</div>
+        <div class="section-desc">디지털 도구와 아날로그 습관 사이에서의 경험을 물어볼게요.</div>
+      </div>
+      <div class="section-1">
+        <div class="question-card">
+          <div class="question-number">Q1</div>
+          <div class="question-text">디지털 도구를 쓰면서 "이건 그냥 손으로 하는 게 낫겠다" 싶었던 적 있나요?</div>
+          <div class="options">
+            <label class="option-label"><input type="radio" name="Q1" value="자주 있어요"> 자주 있어요</label>
+            <label class="option-label"><input type="radio" name="Q1" value="가끔 있어요"> 가끔 있어요</label>
+            <label class="option-label"><input type="radio" name="Q1" value="거의 없어요"> 거의 없어요</label>
+            <label class="option-label"><input type="radio" name="Q1" value="전혀 없어요"> 전혀 없어요</label>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q2</div>
+          <div class="question-text">디지털로 대체했다가 다시 아날로그로 돌아간 경험이 있나요? 있다면 이유가 뭔가요?</div>
+          <textarea name="Q2" placeholder="자유롭게 적어주세요."></textarea>
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q3</div>
+          <div class="question-text">아날로그 방식을 고집하는 이유가 있다면요?</div>
+          <textarea name="Q3" placeholder="예: 손으로 쓰면 더 잘 기억돼요, 화면이 피곤해서요 등"></textarea>
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q4</div>
+          <div class="question-text">디지털 도구가 채워주지 못한다고 느끼는 게 있나요?</div>
+          <textarea name="Q4" placeholder="자유롭게 적어주세요."></textarea>
+        </div>
+      </div>
+
+      <div class="section-divider section-2">
+        <div class="section-title"><span class="section-dot"></span>메모 습관 & 포스트잇</div>
+        <div class="section-desc">평소 메모 방식과 포스트잇 사용 패턴을 알고 싶어요.</div>
+      </div>
+      <div class="section-2">
+        <div class="question-card">
+          <div class="question-number">Q5</div>
+          <div class="question-text">평소 메모나 기록을 어떻게 하나요? (복수 선택 가능)</div>
+          <div class="options">
+            <label class="option-label"><input type="checkbox" name="Q5" value="물리적 포스트잇"> 물리적 포스트잇</label>
+            <label class="option-label"><input type="checkbox" name="Q5" value="노트/다이어리"> 노트/다이어리</label>
+            <label class="option-label"><input type="checkbox" name="Q5" value="스마트폰 메모 앱"> 스마트폰 메모 앱</label>
+            <label class="option-label"><input type="checkbox" name="Q5" value="Notion/옵시디언 등"> Notion / 옵시디언 등 앱</label>
+            <label class="option-label"><input type="checkbox" name="Q5" value="음성 메모"> 음성 메모</label>
+            <label class="option-label"><input type="checkbox" name="Q5" value="기타"> 기타</label>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q6</div>
+          <div class="question-text">포스트잇 사용이 얼마나 익숙한가요?</div>
+          <div class="options">
+            <label class="option-label"><input type="radio" name="Q6" value="매우 익숙해요. 없으면 불편할 것 같아요"> 매우 익숙해요. 없으면 불편할 것 같아요.</label>
+            <label class="option-label"><input type="radio" name="Q6" value="익숙한 편이에요"> 익숙한 편이에요.</label>
+            <label class="option-label"><input type="radio" name="Q6" value="있어도 없어도 상관없어요"> 있어도 없어도 상관없어요.</label>
+            <label class="option-label"><input type="radio" name="Q6" value="별로 익숙하지 않아요"> 별로 익숙하지 않아요.</label>
+            <label class="option-label"><input type="radio" name="Q6" value="거의 써본 적 없어요"> 거의 써본 적 없어요.</label>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q7</div>
+          <div class="question-text">마지막으로 포스트잇을 붙였을 때 어떤 상황이었나요?</div>
+          <textarea name="Q7" placeholder="최대한 구체적으로 적어주시면 좋아요."></textarea>
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q8</div>
+          <div class="question-text">포스트잇을 떼는 타이밍은 언제예요?</div>
+          <textarea name="Q8" placeholder="예: 할 일을 끝냈을 때, 기억했을 때, 그냥 지저분해 보일 때 등"></textarea>
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q9</div>
+          <div class="question-text">포스트잇이 우리 일상에 얼마나 편리하고 중요한 도구라고 생각하나요?</div>
+          <div class="scale-row">
+            <span class="scale-label">전혀 중요하지 않음</span>
+            <div class="scale-options" id="scale-ko_q9">
+              <button type="button" class="scale-btn" onclick="selectScale('ko_q9','Q9',1)">1</button>
+              <button type="button" class="scale-btn" onclick="selectScale('ko_q9','Q9',2)">2</button>
+              <button type="button" class="scale-btn" onclick="selectScale('ko_q9','Q9',3)">3</button>
+              <button type="button" class="scale-btn" onclick="selectScale('ko_q9','Q9',4)">4</button>
+              <button type="button" class="scale-btn" onclick="selectScale('ko_q9','Q9',5)">5</button>
+            </div>
+            <span class="scale-label">매우 중요함</span>
+          </div>
+          <input type="hidden" name="Q9" id="ko_q9_val">
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q10</div>
+          <div class="question-text">포스트잇의 물리적 특성이 중요한가요?</div>
+          <div class="scale-row">
+            <span class="scale-label">전혀 중요하지 않음</span>
+            <div class="scale-options" id="scale-ko_q10">
+              <button type="button" class="scale-btn" onclick="selectScale('ko_q10','Q10',1)">1</button>
+              <button type="button" class="scale-btn" onclick="selectScale('ko_q10','Q10',2)">2</button>
+              <button type="button" class="scale-btn" onclick="selectScale('ko_q10','Q10',3)">3</button>
+              <button type="button" class="scale-btn" onclick="selectScale('ko_q10','Q10',4)">4</button>
+              <button type="button" class="scale-btn" onclick="selectScale('ko_q10','Q10',5)">5</button>
+            </div>
+            <span class="scale-label">매우 중요함</span>
+          </div>
+          <input type="hidden" name="Q10" id="ko_q10_val">
+          <textarea name="Q10_reason" placeholder="색, 질감, 떼고 붙이는 행위 중 뭐가 특히 중요한지 적어주세요."></textarea>
+        </div>
+      </div>
+
+      <div class="section-divider section-3">
+        <div class="section-title"><span class="section-dot"></span>디지털 포스트잇</div>
+        <div class="section-desc">디지털 버전에 대한 생각을 들어볼게요.</div>
+      </div>
+      <div class="section-3">
+        <div class="question-card">
+          <div class="question-number">Q11</div>
+          <div class="question-text">디지털 포스트잇을 쓴다면 어떨 것 같아요?</div>
+          <textarea name="Q11" placeholder="기대되는 점, 걱정되는 점 모두 자유롭게요."></textarea>
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q12</div>
+          <div class="question-text">실제로 써본 적 있다면, 아쉬웠던 점은 뭔가요?</div>
+          <textarea name="Q12" placeholder="써본 적 없으시면 비워두셔도 돼요."></textarea>
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q13</div>
+          <div class="question-text">디지털 포스트잇에 있으면 좋겠다고 생각한 기능이 있나요? (복수 선택 가능)</div>
+          <div class="options" style="margin-bottom:14px;">
+            <label class="option-label"><input type="checkbox" name="Q13" value="검색 기능"> 검색 기능</label>
+            <label class="option-label"><input type="checkbox" name="Q13" value="팀 공유"> 팀 공유</label>
+            <label class="option-label"><input type="checkbox" name="Q13" value="태그/분류"> 태그/분류</label>
+            <label class="option-label"><input type="checkbox" name="Q13" value="알림/리마인더"> 알림/리마인더</label>
+            <label class="option-label"><input type="checkbox" name="Q13" value="기기 간 동기화"> 기기 간 동기화</label>
+            <label class="option-label"><input type="checkbox" name="Q13" value="색상 커스터마이징"> 색상 커스터마이징</label>
+            <label class="option-label"><input type="checkbox" name="Q13" value="기타"> 기타</label>
+          </div>
+          <textarea name="Q13_other" placeholder="기타 기능이나 추가 의견이 있다면요."></textarea>
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q14</div>
+          <div class="question-text">디지털 포스트잇 전용 전자기기라면 얼마까지 낼 의향이 있나요?</div>
+          <div class="options">
+            <label class="option-label"><input type="radio" name="Q14" value="돈을 낼 생각이 없어요"> 돈을 낼 생각이 없어요</label>
+            <label class="option-label"><input type="radio" name="Q14" value="30만원 이하"> 30만원 이하</label>
+            <label class="option-label"><input type="radio" name="Q14" value="30만원~50만원"> 30만원 ~ 50만원</label>
+            <label class="option-label"><input type="radio" name="Q14" value="50만원~80만원"> 50만원 ~ 80만원</label>
+            <label class="option-label"><input type="radio" name="Q14" value="80만원~100만원"> 80만원 ~ 100만원</label>
+            <label class="option-label"><input type="radio" name="Q14" value="100만원~150만원"> 100만원 ~ 150만원</label>
+            <label class="option-label"><input type="radio" name="Q14" value="150만원 이상도 괜찮아요"> 150만원 이상도 괜찮아요</label>
+          </div>
+        </div>
+      </div>
+      <div class="submit-wrap">
+        <button type="submit" class="submit-btn" id="submitBtn-ko">제출하기</button>
+      </div>
+    </form>
+    <div class="success-msg" id="successMsg-ko">
+      <h2>감사해요! 🌟</h2>
+      <p>소중한 응답 잘 받았어요.<br>인사이트 발굴에 큰 도움이 될 거예요.</p>
+    </div>
+  </div>
+
+  <!-- ===== ENGLISH ===== -->
+  <div class="survey-panel" id="panel-en">
+    <div class="header">
+      <div class="header-sticky">
+        <h1>Analogue vs Digital<br>Note-taking Survey</h1>
+        <p>Your honest answers help a lot.<br>Takes about 5 minutes.</p>
+      </div>
+    </div>
+    <form id="surveyForm-en">
+      <input type="hidden" name="_language" value="English">
+
+      <div class="section-divider section-1">
+        <div class="section-title"><span class="section-dot"></span>Analogue Habits & Digital Friction</div>
+        <div class="section-desc">We'd like to understand how you navigate between analogue and digital tools.</div>
+      </div>
+      <div class="section-1">
+        <div class="question-card">
+          <div class="question-number">Q1</div>
+          <div class="question-text">Have you ever thought "this is just easier by hand" while using a digital tool?</div>
+          <div class="options">
+            <label class="option-label"><input type="radio" name="Q1" value="Often"> Often</label>
+            <label class="option-label"><input type="radio" name="Q1" value="Sometimes"> Sometimes</label>
+            <label class="option-label"><input type="radio" name="Q1" value="Rarely"> Rarely</label>
+            <label class="option-label"><input type="radio" name="Q1" value="Never"> Never</label>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q2</div>
+          <div class="question-text">Have you switched from digital back to analogue for something? If so, why?</div>
+          <textarea name="Q2" placeholder="Feel free to share."></textarea>
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q3</div>
+          <div class="question-text">Is there a reason you stick with analogue for certain things?</div>
+          <textarea name="Q3" placeholder="e.g. I remember things better when I write by hand, screens are tiring, etc."></textarea>
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q4</div>
+          <div class="question-text">Is there something digital tools just can't seem to replace for you?</div>
+          <textarea name="Q4" placeholder="Feel free to share."></textarea>
+        </div>
+      </div>
+
+      <div class="section-divider section-2">
+        <div class="section-title"><span class="section-dot"></span>Note-taking Habits & Post-its</div>
+        <div class="section-desc">Tell us about your everyday note-taking and post-it habits.</div>
+      </div>
+      <div class="section-2">
+        <div class="question-card">
+          <div class="question-number">Q5</div>
+          <div class="question-text">How do you usually take notes or keep records? (Multiple answers OK)</div>
+          <div class="options">
+            <label class="option-label"><input type="checkbox" name="Q5" value="Physical post-its"> Physical post-its</label>
+            <label class="option-label"><input type="checkbox" name="Q5" value="Notebook/journal"> Notebook / journal</label>
+            <label class="option-label"><input type="checkbox" name="Q5" value="Smartphone notes app"> Smartphone notes app</label>
+            <label class="option-label"><input type="checkbox" name="Q5" value="Notion/Obsidian/similar"> Notion / Obsidian / similar</label>
+            <label class="option-label"><input type="checkbox" name="Q5" value="Voice memos"> Voice memos</label>
+            <label class="option-label"><input type="checkbox" name="Q5" value="Other"> Other</label>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q6</div>
+          <div class="question-text">How familiar are you with using post-its?</div>
+          <div class="options">
+            <label class="option-label"><input type="radio" name="Q6" value="Very familiar. I'd miss them if they were gone."> Very familiar. I'd miss them if they were gone.</label>
+            <label class="option-label"><input type="radio" name="Q6" value="Fairly familiar."> Fairly familiar.</label>
+            <label class="option-label"><input type="radio" name="Q6" value="Makes no difference to me either way."> Makes no difference to me either way.</label>
+            <label class="option-label"><input type="radio" name="Q6" value="Not very familiar."> Not very familiar.</label>
+            <label class="option-label"><input type="radio" name="Q6" value="I've barely used them."> I've barely used them.</label>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q7</div>
+          <div class="question-text">Can you describe the last time you used a post-it?</div>
+          <textarea name="Q7" placeholder="The more specific, the better."></textarea>
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q8</div>
+          <div class="question-text">When do you take a post-it down?</div>
+          <textarea name="Q8" placeholder="e.g. When I've finished the task, when I've memorised it, when it looks too cluttered, etc."></textarea>
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q9</div>
+          <div class="question-text">How useful and relevant do you think post-its are in everyday life?</div>
+          <div class="scale-row">
+            <span class="scale-label">Not useful at all</span>
+            <div class="scale-options" id="scale-en_q9">
+              <button type="button" class="scale-btn" onclick="selectScale('en_q9','Q9',1)">1</button>
+              <button type="button" class="scale-btn" onclick="selectScale('en_q9','Q9',2)">2</button>
+              <button type="button" class="scale-btn" onclick="selectScale('en_q9','Q9',3)">3</button>
+              <button type="button" class="scale-btn" onclick="selectScale('en_q9','Q9',4)">4</button>
+              <button type="button" class="scale-btn" onclick="selectScale('en_q9','Q9',5)">5</button>
+            </div>
+            <span class="scale-label">Extremely useful</span>
+          </div>
+          <input type="hidden" name="Q9" id="en_q9_val">
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q10</div>
+          <div class="question-text">How important are the physical properties of a post-it to you?</div>
+          <div class="scale-row">
+            <span class="scale-label">Not important at all</span>
+            <div class="scale-options" id="scale-en_q10">
+              <button type="button" class="scale-btn" onclick="selectScale('en_q10','Q10',1)">1</button>
+              <button type="button" class="scale-btn" onclick="selectScale('en_q10','Q10',2)">2</button>
+              <button type="button" class="scale-btn" onclick="selectScale('en_q10','Q10',3)">3</button>
+              <button type="button" class="scale-btn" onclick="selectScale('en_q10','Q10',4)">4</button>
+              <button type="button" class="scale-btn" onclick="selectScale('en_q10','Q10',5)">5</button>
+            </div>
+            <span class="scale-label">Very important</span>
+          </div>
+          <input type="hidden" name="Q10" id="en_q10_val">
+          <textarea name="Q10_reason" placeholder="Which matters most: colour, texture, or the act of sticking and peeling?"></textarea>
+        </div>
+      </div>
+
+      <div class="section-divider section-3">
+        <div class="section-title"><span class="section-dot"></span>Digital Post-its</div>
+        <div class="section-desc">We'd love to know your thoughts on a digital version.</div>
+      </div>
+      <div class="section-3">
+        <div class="question-card">
+          <div class="question-number">Q11</div>
+          <div class="question-text">What do you think it would be like to use a digital post-it?</div>
+          <textarea name="Q11" placeholder="Share both what excites and what worries you."></textarea>
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q12</div>
+          <div class="question-text">If you've tried one before, what felt lacking?</div>
+          <textarea name="Q12" placeholder="Leave blank if you haven't tried one."></textarea>
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q13</div>
+          <div class="question-text">What features would you want in a digital post-it? (Multiple answers OK)</div>
+          <div class="options" style="margin-bottom:14px;">
+            <label class="option-label"><input type="checkbox" name="Q13" value="Search"> Search</label>
+            <label class="option-label"><input type="checkbox" name="Q13" value="Team sharing"> Team sharing</label>
+            <label class="option-label"><input type="checkbox" name="Q13" value="Tags/categories"> Tags / categories</label>
+            <label class="option-label"><input type="checkbox" name="Q13" value="Reminders/alerts"> Reminders / alerts</label>
+            <label class="option-label"><input type="checkbox" name="Q13" value="Cross-device sync"> Cross-device sync</label>
+            <label class="option-label"><input type="checkbox" name="Q13" value="Colour customisation"> Colour customisation</label>
+            <label class="option-label"><input type="checkbox" name="Q13" value="Other"> Other</label>
+          </div>
+          <textarea name="Q13_other" placeholder="Any other features or thoughts?"></textarea>
+        </div>
+        <div class="question-card">
+          <div class="question-number">Q14</div>
+          <div class="question-text">How much would you be willing to pay for a dedicated digital post-it device?</div>
+          <div class="options">
+            <label class="option-label"><input type="radio" name="Q14" value="I wouldn't pay for it"> I wouldn't pay for it</label>
+            <label class="option-label"><input type="radio" name="Q14" value="Under $200"> Under $200</label>
+            <label class="option-label"><input type="radio" name="Q14" value="$200~$400"> $200 ~ $400</label>
+            <label class="option-label"><input type="radio" name="Q14" value="$400~$600"> $400 ~ $600</label>
+            <label class="option-label"><input type="radio" name="Q14" value="$600~$800"> $600 ~ $800</label>
+            <label class="option-label"><input type="radio" name="Q14" value="$800~$1,000"> $800 ~ $1,000</label>
+            <label class="option-label"><input type="radio" name="Q14" value="$1,000 or more is fine"> $1,000 or more is fine</label>
+          </div>
+        </div>
+      </div>
+      <div class="submit-wrap">
+        <button type="submit" class="submit-btn" id="submitBtn-en">Submit</button>
+      </div>
+    </form>
+    <div class="success-msg" id="successMsg-en">
+      <h2>Thank you! 🌟</h2>
+      <p>Your response means a lot.<br>It'll help us uncover real insights.</p>
+    </div>
+  </div>
+
+</div>
+<script>
+  const FORMSPREE = 'https://formspree.io/f/mdayyayd';
+
+  function switchLang(lang, btn) {
+    document.querySelectorAll('.survey-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-' + lang).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  function selectScale(scaleId, fieldId, val) {
+    document.getElementById(scaleId + '_val').value = val;
+    document.querySelectorAll('#scale-' + scaleId + ' .scale-btn').forEach(btn => {
+      btn.classList.toggle('selected', parseInt(btn.textContent) === val);
+    });
+  }
+
+  async function handleSubmit(e, lang) {
+    e.preventDefault();
+    const form = e.target;
+    const btn = document.getElementById('submitBtn-' + lang);
+    btn.disabled = true;
+    btn.textContent = lang === 'ko' ? '제출 중...' : 'Submitting...';
+
+    const data = new FormData(form);
+
+    try {
+      const res = await fetch(FORMSPREE, {
+        method: 'POST',
+        body: data,
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (res.ok) {
+        form.style.display = 'none';
+        document.getElementById('successMsg-' + lang).style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        btn.disabled = false;
+        btn.textContent = lang === 'ko' ? '제출하기' : 'Submit';
+        alert(lang === 'ko' ? '제출에 실패했어요. 다시 시도해주세요.' : 'Submission failed. Please try again.');
+      }
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = lang === 'ko' ? '제출하기' : 'Submit';
+      alert(lang === 'ko' ? '네트워크 오류가 발생했어요.' : 'Network error. Please try again.');
+    }
+  }
+
+  document.getElementById('surveyForm-ko').addEventListener('submit', e => handleSubmit(e, 'ko'));
+  document.getElementById('surveyForm-en').addEventListener('submit', e => handleSubmit(e, 'en'));
+</script>
+</body>
+</html>
